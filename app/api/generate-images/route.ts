@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateAllSlideImages } from '@/lib/gemini-image';
+import { sanitizeImages } from '@/lib/image-sanitizer';
 import { SlideData } from '@/lib/types';
 
 const PASSWORD = 'pairshot2026';
@@ -20,7 +21,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'スライドデータが必要です' }, { status: 400 });
     }
 
-    const images = await generateAllSlideImages(slides);
+    // Generate images with Gemini
+    const rawImages = await generateAllSlideImages(slides);
+
+    // Sanitize: strip all AI metadata, add noise, re-encode as JPEG
+    const images = await sanitizeImages(rawImages);
+
     return NextResponse.json({ images });
   } catch (error) {
     console.error('Generate images error:', error);

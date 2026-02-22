@@ -52,10 +52,10 @@ export default function SlideCarousel({
 
         <div className="rounded-lg overflow-hidden shadow-2xl" style={{ border: '1px solid var(--border)' }}>
           <img
-            src={`data:image/png;base64,${images[current].base64}`}
+            src={`data:image/jpeg;base64,${images[current].base64}`}
             alt={`スライド ${current + 1}`}
             className="w-auto"
-            style={{ height: 480, aspectRatio: '9/16' }}
+            style={{ height: 480, aspectRatio: '4/5' }}
           />
         </div>
 

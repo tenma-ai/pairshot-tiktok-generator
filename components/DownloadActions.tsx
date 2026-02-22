@@ -16,8 +16,8 @@ export default function DownloadActions({
     if (!image) return;
     const timestamp = Date.now();
     const link = document.createElement('a');
-    link.href = `data:image/png;base64,${image.base64}`;
-    link.download = `pairshot_slide_${image.slideNumber}_${timestamp}.png`;
+    link.href = `data:image/jpeg;base64,${image.base64}`;
+    link.download = `pairshot_slide_${image.slideNumber}_${timestamp}.jpg`;
     link.click();
   };
 
@@ -32,7 +32,7 @@ export default function DownloadActions({
       for (let i = 0; i < binary.length; i++) {
         bytes[i] = binary.charCodeAt(i);
       }
-      zip.file(`pairshot_slide_${image.slideNumber}_${timestamp}.png`, bytes);
+      zip.file(`pairshot_slide_${image.slideNumber}_${timestamp}.jpg`, bytes);
     });
 
     const blob = await zip.generateAsync({ type: 'blob' });
@@ -51,7 +51,7 @@ export default function DownloadActions({
         style={{ border: '1px solid var(--border)', color: 'var(--text-secondary)' }}
       >
         <Download size={14} />
-        スライド{currentSlide + 1}をPNG
+        スライド{currentSlide + 1}をDL
       </button>
       <button
         onClick={downloadZip}

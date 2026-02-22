@@ -71,7 +71,7 @@ export default function Home() {
       setDescription(data.description);
 
       setProgress('Step 2/3: 画像生成中...');
-      const renderRes = await fetch('/api/render-slides', {
+      const renderRes = await fetch('/api/generate-images', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -105,7 +105,7 @@ export default function Home() {
 
     try {
       setProgress('画像を再生成中...');
-      const renderRes = await fetch('/api/render-slides', {
+      const renderRes = await fetch('/api/generate-images', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

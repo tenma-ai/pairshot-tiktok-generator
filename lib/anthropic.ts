@@ -2,9 +2,13 @@ import Anthropic from '@anthropic-ai/sdk';
 import { SYSTEM_PROMPT, getThemePrompt } from './prompts';
 import { GenerateResponse } from './types';
 
-const client = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY!,
-});
+let _client: Anthropic | null = null;
+function getClient(): Anthropic {
+  if (!_client) {
+    _client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
+  }
+  return _client;
+}
 
 export async function generateSlideScript(
   theme: string,
@@ -17,7 +21,7 @@ export async function generateSlideScript(
     ? `\n\n選択された素材ID: ${selectedAssets.join(', ')}\nこれらの素材をカードに積極的に活用してください。`
     : '';
 
-  const response = await client.messages.create({
+  const response = await getClient().messages.create({
     model: 'claude-sonnet-4-20250514',
     max_tokens: 4096,
     messages: [

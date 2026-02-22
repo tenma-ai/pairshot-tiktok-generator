@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { renderSlides } from '@/lib/slide-renderer';
+import { generateAllSlideImages } from '@/lib/gemini-image';
 import { SlideData } from '@/lib/types';
 
 const PASSWORD = 'pairshot2026';
@@ -17,14 +17,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (!slides || !Array.isArray(slides)) {
+    if (!slides || !Array.isArray(slides) || slides.length === 0) {
       return NextResponse.json({ error: 'スライドデータが必要です' }, { status: 400 });
     }
 
-    const images = await renderSlides(slides, selectedAssets || []);
+    const images = await generateAllSlideImages(slides, selectedAssets || []);
     return NextResponse.json({ images });
   } catch (error) {
-    console.error('Render error:', error);
+    console.error('Generate images error:', error);
     const message = error instanceof Error ? error.message : '画像生成に失敗しました';
     return NextResponse.json({ error: message }, { status: 500 });
   }

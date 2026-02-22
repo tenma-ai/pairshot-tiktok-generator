@@ -1,0 +1,52 @@
+import Anthropic from '@anthropic-ai/sdk';
+import { SYSTEM_PROMPT, getThemePrompt } from './prompts';
+import { GenerateResponse } from './types';
+
+const client = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY!,
+});
+
+export async function generateSlideScript(
+  theme: string,
+  customScript?: string,
+  selectedAssets?: string[]
+): Promise<GenerateResponse> {
+  const themePrompt = getThemePrompt(theme, customScript);
+
+  const assetContext = selectedAssets?.length
+    ? `\n\n選択された素材ID: ${selectedAssets.join(', ')}\nこれらの素材をカードに積極的に活用してください。`
+    : '';
+
+  const response = await client.messages.create({
+    model: 'claude-sonnet-4-20250514',
+    max_tokens: 4096,
+    messages: [
+      {
+        role: 'user',
+        content: `${themePrompt}${assetContext}`,
+      },
+    ],
+    system: SYSTEM_PROMPT,
+  });
+
+  const text = response.content
+    .filter((block) => block.type === 'text')
+    .map((block) => {
+      if (block.type === 'text') return block.text;
+      return '';
+    })
+    .join('');
+
+  const jsonMatch = text.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) {
+    throw new Error('AIからの応答をパースできませんでした');
+  }
+
+  const parsed = JSON.parse(jsonMatch[0]) as GenerateResponse;
+
+  if (!parsed.slides || parsed.slides.length !== 5) {
+    throw new Error('5枚のスライドが生成されませんでした');
+  }
+
+  return parsed;
+}

@@ -41,12 +41,18 @@ export async function generateSlideImage(
     const img = loadAssetBase64(asset.id);
     if (img) {
       parts.push({ inlineData: { mimeType: img.mimeType, data: img.data } });
-      refLabels.push(`${asset.label}(${asset.id})`);
+      refLabels.push(asset.label);
     }
   }
 
   // Build text prompt with all available assets
-  let textPrompt = `上記の${refLabels.length}枚の画像はPairShotアプリの素材です（${refLabels.join('、')}）。このスライドに最適な素材を選んで使ってください:\n\n`;
+  let textPrompt = `上記の${refLabels.length}枚の画像はPairShotアプリの素材です（${refLabels.join('、')}）。このスライドに最適な素材を選んで使ってください。
+
+【重要ルール】
+- 素材画像をそのまま貼り付けて使うこと。素材の下にIDやラベル名（"appstore"、"logo"、"playstore"等）を絶対に書かないこと。
+- 素材はあくまで画像として配置するだけ。キャプションやラベルは不要。
+
+`;
   textPrompt += prompt;
 
   parts.push({ text: textPrompt });

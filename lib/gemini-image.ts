@@ -27,31 +27,26 @@ function loadAssetBase64(assetId: string): { data: string; mimeType: string } | 
 }
 
 export async function generateSlideImage(
-  slide: SlideData,
-  selectedAssets: string[]
+  slide: SlideData
 ): Promise<string> {
   const prompt = buildSlideImagePrompt(slide);
 
   const parts: Array<{ inlineData: { mimeType: string; data: string } } | { text: string }> = [];
 
-  // Load reference images from assetIds
-  const assetIdsToLoad = slide.assetIds.filter(id => selectedAssets.includes(id));
+  // Load all assets and let Gemini choose which to use
+  const allAssets = getAllAssets();
   const refLabels: string[] = [];
 
-  for (const id of assetIdsToLoad) {
-    const img = loadAssetBase64(id);
+  for (const asset of allAssets) {
+    const img = loadAssetBase64(asset.id);
     if (img) {
       parts.push({ inlineData: { mimeType: img.mimeType, data: img.data } });
-      const asset = getAllAssets().find(a => a.id === id);
-      refLabels.push(`${asset?.label || id}`);
+      refLabels.push(`${asset.label}(${asset.id})`);
     }
   }
 
-  // Build text prompt with reference context
-  let textPrompt = '';
-  if (refLabels.length > 0) {
-    textPrompt += `上記の画像はPairShotアプリの素材です（${refLabels.join('、')}）。これらをリファレンスとして使って以下のスライドを生成してください:\n\n`;
-  }
+  // Build text prompt with all available assets
+  let textPrompt = `上記の${refLabels.length}枚の画像はPairShotアプリの素材です（${refLabels.join('、')}）。このスライドに最適な素材を選んで使ってください:\n\n`;
   textPrompt += prompt;
 
   parts.push({ text: textPrompt });
@@ -77,8 +72,7 @@ export async function generateSlideImage(
 }
 
 export async function generateAllSlideImages(
-  slides: SlideData[],
-  selectedAssets: string[]
+  slides: SlideData[]
 ): Promise<Array<{ slideNumber: number; base64: string }>> {
   // Try all 5 in parallel first
   try {
@@ -88,7 +82,7 @@ export async function generateAllSlideImages(
         // 1 retry on failure
         for (let attempt = 0; attempt < 2; attempt++) {
           try {
-            const base64 = await generateSlideImage(slide, selectedAssets);
+            const base64 = await generateSlideImage(slide);
             return { slideNumber: slide.slideNumber, base64 };
           } catch (e) {
             lastError = e instanceof Error ? e : new Error(String(e));
@@ -108,14 +102,14 @@ export async function generateAllSlideImages(
 
     const results1 = await Promise.all(
       batch1.map(async (slide) => {
-        const base64 = await generateSlideImage(slide, selectedAssets);
+        const base64 = await generateSlideImage(slide);
         return { slideNumber: slide.slideNumber, base64 };
       })
     );
 
     const results2 = await Promise.all(
       batch2.map(async (slide) => {
-        const base64 = await generateSlideImage(slide, selectedAssets);
+        const base64 = await generateSlideImage(slide);
         return { slideNumber: slide.slideNumber, base64 };
       })
     );

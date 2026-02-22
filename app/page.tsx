@@ -1,12 +1,10 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { ThemeId, SlideData, GenerateResponse } from '@/lib/types';
-import { DEFAULT_SELECTED } from '@/lib/assets';
 import PasswordGate from '@/components/PasswordGate';
 import ThemeSelector from '@/components/ThemeSelector';
 import CustomScriptInput from '@/components/CustomScriptInput';
-import AssetSelector from '@/components/AssetSelector';
 import GenerateButton from '@/components/GenerateButton';
 import SlideCarousel from '@/components/SlideCarousel';
 import ScriptEditor from '@/components/ScriptEditor';
@@ -15,9 +13,9 @@ import DownloadActions from '@/components/DownloadActions';
 
 export default function Home() {
   const [password, setPassword] = useState<string | null>(null);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [theme, setTheme] = useState<ThemeId>('couple_tips');
   const [customScript, setCustomScript] = useState('');
-  const [selectedAssets, setSelectedAssets] = useState<string[]>(DEFAULT_SELECTED);
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState('');
   const [error, setError] = useState('');
@@ -29,12 +27,21 @@ export default function Home() {
   const [description, setDescription] = useState('');
   const [currentSlide, setCurrentSlide] = useState(0);
 
-  const handleAuth = useCallback((pw: string) => {
-    setPassword(pw);
+  // Load saved password on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('pairshot_pw');
+    if (saved) setPassword(saved);
   }, []);
 
-  const generate = async () => {
-    if (!password) return;
+  const handleAuth = (pw: string) => {
+    setPassword(pw);
+    localStorage.setItem('pairshot_pw', pw);
+    setShowPasswordModal(false);
+    // Auto-trigger generation after password entry
+    doGenerate(pw);
+  };
+
+  const doGenerate = async (pw: string) => {
     setLoading(true);
     setError('');
     setImages([]);
@@ -45,10 +52,9 @@ export default function Home() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          password,
+          password: pw,
           theme,
           customScript: theme === 'custom' ? customScript : undefined,
-          selectedAssets,
         }),
       });
 
@@ -56,6 +62,7 @@ export default function Home() {
         setError('パスワードが正しくありません');
         localStorage.removeItem('pairshot_pw');
         setPassword(null);
+        setShowPasswordModal(true);
         return;
       }
 
@@ -75,9 +82,8 @@ export default function Home() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          password,
+          password: pw,
           slides: data.slides,
-          selectedAssets,
         }),
       });
 
@@ -98,6 +104,14 @@ export default function Home() {
     }
   };
 
+  const generate = async () => {
+    if (!password) {
+      setShowPasswordModal(true);
+      return;
+    }
+    doGenerate(password);
+  };
+
   const regenerateImages = async () => {
     if (!password || !slides.length) return;
     setLoading(true);
@@ -111,7 +125,6 @@ export default function Home() {
         body: JSON.stringify({
           password,
           slides,
-          selectedAssets,
         }),
       });
 
@@ -131,12 +144,12 @@ export default function Home() {
     }
   };
 
-  if (!password) {
-    return <PasswordGate onAuth={handleAuth} />;
-  }
-
   return (
     <div className="min-h-screen" style={{ background: 'var(--bg-primary)' }}>
+      {showPasswordModal && (
+        <PasswordGate onAuth={handleAuth} onClose={() => setShowPasswordModal(false)} />
+      )}
+
       <header
         className="sticky top-0 z-50 px-4 py-3 flex items-center justify-between"
         style={{
@@ -146,16 +159,18 @@ export default function Home() {
         }}
       >
         <h1 className="text-sm font-bold">PairShot TikTok Generator</h1>
-        <button
-          onClick={() => {
-            localStorage.removeItem('pairshot_pw');
-            setPassword(null);
-          }}
-          className="text-xs px-3 py-1 rounded-lg transition-all duration-200"
-          style={{ border: '1px solid var(--border)', color: 'var(--text-secondary)' }}
-        >
-          退出
-        </button>
+        {password && (
+          <button
+            onClick={() => {
+              localStorage.removeItem('pairshot_pw');
+              setPassword(null);
+            }}
+            className="text-xs px-3 py-1 rounded-lg transition-all duration-200"
+            style={{ border: '1px solid var(--border)', color: 'var(--text-secondary)' }}
+          >
+            認証クリア
+          </button>
+        )}
       </header>
 
       <div className="flex flex-col lg:flex-row">
@@ -169,8 +184,6 @@ export default function Home() {
             onChange={setCustomScript}
             visible={theme === 'custom'}
           />
-
-          <AssetSelector selected={selectedAssets} onChange={setSelectedAssets} />
 
           <GenerateButton
             onClick={generate}

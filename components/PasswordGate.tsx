@@ -1,26 +1,17 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Lock } from 'lucide-react';
-
-const STORAGE_KEY = 'pairshot_pw';
 
 export default function PasswordGate({
   onAuth,
+  onClose,
 }: {
   onAuth: (password: string) => void;
+  onClose?: () => void;
 }) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [checking, setChecking] = useState(true);
-
-  useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      onAuth(saved);
-    }
-    setChecking(false);
-  }, [onAuth]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,20 +19,15 @@ export default function PasswordGate({
       setError('パスワードを入力してください');
       return;
     }
-    localStorage.setItem(STORAGE_KEY, password);
     onAuth(password);
   };
 
-  if (checking) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-black">
-        <div className="animate-spin w-8 h-8 border-2 border-white/20 border-t-white rounded-full" />
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen flex items-center justify-center bg-black px-4">
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center px-4"
+      style={{ background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)' }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose?.(); }}
+    >
       <form
         onSubmit={handleSubmit}
         className="w-full max-w-sm p-6 rounded-lg"
@@ -54,9 +40,8 @@ export default function PasswordGate({
           >
             <Lock size={20} className="text-white/60" />
           </div>
-          <h1 className="text-lg font-bold">PairShot TikTok Generator</h1>
           <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-            パスワードを入力してください
+            生成にはパスワードが必要です
           </p>
         </div>
 
@@ -88,7 +73,7 @@ export default function PasswordGate({
           className="w-full py-3 rounded-lg text-sm font-bold transition-all duration-200 hover:opacity-90"
           style={{ background: '#ffffff', color: '#000000' }}
         >
-          ログイン
+          生成を開始
         </button>
       </form>
     </div>

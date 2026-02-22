@@ -7,10 +7,9 @@ const PASSWORD = 'pairshot2026';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { password, slides, selectedAssets } = body as {
+    const { password, slides } = body as {
       password: string;
       slides: SlideData[];
-      selectedAssets: string[];
     };
 
     if (password !== PASSWORD) {
@@ -21,7 +20,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'スライドデータが必要です' }, { status: 400 });
     }
 
-    const images = await generateAllSlideImages(slides, selectedAssets || []);
+    const images = await generateAllSlideImages(slides);
     return NextResponse.json({ images });
   } catch (error) {
     console.error('Generate images error:', error);

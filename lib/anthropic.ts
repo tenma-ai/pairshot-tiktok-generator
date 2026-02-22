@@ -12,14 +12,9 @@ function getClient(): Anthropic {
 
 export async function generateSlideScript(
   theme: string,
-  customScript?: string,
-  selectedAssets?: string[]
+  customScript?: string
 ): Promise<GenerateResponse> {
   const themePrompt = getThemePrompt(theme, customScript);
-
-  const assetContext = selectedAssets?.length
-    ? `\n\n選択された素材ID: ${selectedAssets.join(', ')}\nこれらの素材をカードに積極的に活用してください。`
-    : '';
 
   const response = await getClient().messages.create({
     model: 'claude-sonnet-4-20250514',
@@ -27,7 +22,7 @@ export async function generateSlideScript(
     messages: [
       {
         role: 'user',
-        content: `${themePrompt}${assetContext}`,
+        content: themePrompt,
       },
     ],
     system: SYSTEM_PROMPT,

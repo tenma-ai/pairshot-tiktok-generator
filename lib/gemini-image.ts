@@ -1,8 +1,8 @@
 import { GoogleGenAI } from '@google/genai';
 import fs from 'fs';
 import path from 'path';
-import { SlideData } from './types';
-import { getAllAssets } from './assets';
+import { SlideData, PairshotLevel } from './types';
+import { getAllAssets, ASSET_FILES } from './assets';
 import { buildSlideImagePrompt } from './prompts';
 
 let _ai: GoogleGenAI | null = null;
@@ -26,18 +26,42 @@ function loadAssetBase64(assetId: string): { data: string; mimeType: string } | 
   return { data: buffer.toString('base64'), mimeType };
 }
 
+function getAssetsForLevel(level: PairshotLevel): Array<{ id: string; path: string; label: string }> {
+  switch (level) {
+    case 1:
+    case 2:
+      // No PairShot assets - pure content
+      return [];
+    case 3:
+      // Only screenshots (1-2 for context)
+      return [...ASSET_FILES.screenshots];
+    case 4:
+      // Screenshots + logo/character
+      return [
+        ...ASSET_FILES.screenshots,
+        ...ASSET_FILES.branding.filter(a => ['logo', 'character'].includes(a.id)),
+        ...ASSET_FILES.games,
+      ];
+    case 5:
+      // Everything
+      return getAllAssets();
+    default:
+      return [];
+  }
+}
+
 export async function generateSlideImage(
   slide: SlideData
 ): Promise<string> {
   const prompt = buildSlideImagePrompt(slide);
+  const level = slide.pairshotLevel || 3;
 
   const parts: Array<{ inlineData: { mimeType: string; data: string } } | { text: string }> = [];
 
-  // Load all assets and let Gemini choose which to use
-  const allAssets = getAllAssets();
+  const assetsToLoad = getAssetsForLevel(level);
   const refLabels: string[] = [];
 
-  for (const asset of allAssets) {
+  for (const asset of assetsToLoad) {
     const img = loadAssetBase64(asset.id);
     if (img) {
       parts.push({ inlineData: { mimeType: img.mimeType, data: img.data } });
@@ -45,14 +69,16 @@ export async function generateSlideImage(
     }
   }
 
-  // Build text prompt with all available assets
-  let textPrompt = `上記の${refLabels.length}枚の画像はPairShotアプリの素材です（${refLabels.join('、')}）。このスライドに最適な素材を選んで使ってください。
+  let textPrompt = '';
+  if (refLabels.length > 0) {
+    textPrompt += `上記の${refLabels.length}枚の画像はPairShotアプリの素材です（${refLabels.join('、')}）。このスライドに最適な素材を選んで使ってください。
 
 【重要ルール】
 - 素材画像をそのまま貼り付けて使うこと。素材の下にIDやラベル名（"appstore"、"logo"、"playstore"等）を絶対に書かないこと。
 - 素材はあくまで画像として配置するだけ。キャプションやラベルは不要。
 
 `;
+  }
   textPrompt += prompt;
 
   parts.push({ text: textPrompt });

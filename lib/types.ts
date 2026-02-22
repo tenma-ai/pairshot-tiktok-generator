@@ -4,6 +4,8 @@ export interface ColorScheme {
   accent: string;
 }
 
+export type PairshotLevel = 1 | 2 | 3 | 4 | 5;
+
 export interface SlideData {
   slideNumber: number;
   headline: string;
@@ -12,6 +14,7 @@ export interface SlideData {
   layoutType: 'hook' | 'content' | 'app_showcase' | 'cta';
   colorScheme: ColorScheme;
   assetIds: string[];
+  pairshotLevel: PairshotLevel;
 }
 
 export interface GenerateResponse {

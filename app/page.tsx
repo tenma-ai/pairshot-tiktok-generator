@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ThemeId, SlideData, GenerateResponse } from '@/lib/types';
+import { ThemeId, SlideData, GenerateResponse, PairshotLevel } from '@/lib/types';
 import PasswordGate from '@/components/PasswordGate';
 import ThemeSelector from '@/components/ThemeSelector';
 import CustomScriptInput from '@/components/CustomScriptInput';
+import PairshotLevelSelector from '@/components/PairshotLevelSelector';
 import GenerateButton from '@/components/GenerateButton';
 import SlideCarousel from '@/components/SlideCarousel';
 import ScriptEditor from '@/components/ScriptEditor';
@@ -16,6 +17,7 @@ export default function Home() {
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [theme, setTheme] = useState<ThemeId>('couple_tips');
   const [customScript, setCustomScript] = useState('');
+  const [pairshotLevels, setPairshotLevels] = useState<PairshotLevel[]>([1, 1, 2, 4, 5]);
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState('');
   const [error, setError] = useState('');
@@ -55,6 +57,7 @@ export default function Home() {
           password: pw,
           theme,
           customScript: theme === 'custom' ? customScript : undefined,
+          pairshotLevels,
         }),
       });
 
@@ -184,6 +187,8 @@ export default function Home() {
             onChange={setCustomScript}
             visible={theme === 'custom'}
           />
+
+          <PairshotLevelSelector levels={pairshotLevels} onChange={setPairshotLevels} />
 
           <GenerateButton
             onClick={generate}

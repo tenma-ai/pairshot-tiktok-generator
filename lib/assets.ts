@@ -3,6 +3,8 @@ export const ASSET_FILES = {
     { id: 'wordmark', path: '/assets/branding/pairshot文字.png', label: 'ワードマーク' },
     { id: 'logo', path: '/assets/branding/ロゴ.png', label: 'アプリアイコン' },
     { id: 'character', path: '/assets/branding/公式キャラ.png', label: '公式キャラ' },
+    { id: 'appstore', path: '/assets/branding/appstoreicon.png', label: 'App Storeアイコン' },
+    { id: 'playstore', path: '/assets/branding/playstoreicon.png', label: 'Play Storeアイコン' },
   ],
   screenshots: [
     { id: 'card1', path: '/assets/screenshots/カード1.PNG', label: 'カード①' },
